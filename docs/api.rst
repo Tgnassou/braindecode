@@ -151,6 +151,7 @@ Samplers
    RecordingSampler
    SequenceSampler
    RelativePositioningSampler
+   USleepSampler
 
 .. _augmentation_api:
 

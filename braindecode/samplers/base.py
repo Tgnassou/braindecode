@@ -7,7 +7,6 @@ Sampler classes.
 # License: BSD (3-clause)
 
 import numpy as np
-from numpy.lib.arraysetops import unique
 from torch.utils.data.sampler import Sampler
 from sklearn.utils import check_random_state
 
@@ -209,7 +208,7 @@ class USleepSampler(RecordingSampler):
         return start_ind, rec_ind, class_ind
 
     def __len__(self):
-        return len(self.seq_nbr)
+        return self.seq_nbr
 
     def __iter__(self):
         for _ in range(self.seq_nbr):
