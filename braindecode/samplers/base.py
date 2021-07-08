@@ -199,7 +199,7 @@ class USleepSampler(RecordingSampler):
         win_pos = self.rng.choice(
                 [i for i in range(self.n_windows)][
                     np.max((self.n_windows - len_rec_index + win_ind_in_rec, 0)):np.min(
-                        (win_ind_in_rec, self.n_windows)
+                        (win_ind_in_rec+1, self.n_windows)
                     )
                 ]
             )

@@ -1,3 +1,5 @@
+import time
+time0 = time.time()
 """
 Sleep staging on the Sleep Physionet dataset using U-Sleep network
 ==================================================================
@@ -149,10 +151,10 @@ valid_set = splitted['valid']
 # the memory requirements for this example we use shorter sequences of 3
 # windows.
 
-from braindecode.samplers import SequenceSampler
+from braindecode.samplers import SequenceSampler, USleepSampler
 
-n_windows = 3  # Sequences of 3 consecutive windows; originally 35 in paper
-n_windows_stride = 3  # Non-overlapping sequences
+n_windows = 35  # Sequences of 3 consecutive windows; originally 35 in paper
+n_windows_stride = 35  # Non-overlapping sequences
 
 train_sampler = SequenceSampler(train_set.get_metadata(), n_windows, n_windows_stride)
 valid_sampler = SequenceSampler(valid_set.get_metadata(), n_windows, n_windows_stride)
@@ -233,8 +235,8 @@ from skorch.callbacks import EpochScoring
 from braindecode import EEGClassifier
 
 lr = 1e-3
-batch_size = 32
-n_epochs = 1  # this number is kept too small to reduce running time in the doc
+batch_size = 64
+n_epochs = 100  # this number is kept too small to reduce running time in the doc
 
 from sklearn.metrics import balanced_accuracy_score
 
@@ -347,3 +349,5 @@ print(classification_report(y_true.flatten(), y_pred.flatten()))
 # (only two recordings in this example). To further improve performance, more
 # recordings should be included in the training set, the model should be
 # trained for more epochs and hyperparameters should be optimized.
+time1 = time.time()
+print(time1-time0)
