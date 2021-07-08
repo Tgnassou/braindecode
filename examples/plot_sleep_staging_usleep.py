@@ -125,7 +125,7 @@ from braindecode.datasets import BaseConcatDataset
 random_state = 31
 subjects = np.unique(windows_dataset.description['subject'])
 subj_train, subj_valid = train_test_split(
-    subjects, test_size=0.5, random_state=random_state
+    subjects, test_size=0.2, random_state=random_state
 )
 
 split_ids = {'train': subj_train, 'valid': subj_valid}
