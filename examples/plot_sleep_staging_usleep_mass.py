@@ -134,7 +134,7 @@ def load_preproc_mass(
     bids_root=None,
     **kwargs
 ):
-    sfreq = 128
+    sfreq = 100
     if bids_root is None:
         bids_root = os.path.expanduser("~/mne_data/mass-bids/6channels-128Hz/")
 
@@ -143,7 +143,6 @@ def load_preproc_mass(
 
 data_path = "/storage/local/derivatives/MASS/4channels-eeg_eog_emg"
 windows_dataset, ch_names, sfreq = load_preproc_mass(root=data_path,
-                                                     sfreq=None,
                                                      bids_root=None,
                                                      n_subj=None,
                                                      window_size_s=30,
