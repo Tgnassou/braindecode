@@ -141,8 +141,8 @@ def load_preproc_mass(
     return load_preproc_bids(bids_root=bids_root, sfreq=sfreq, **kwargs)
 
 
-data_path = "/storage/local/derivatives/"
-windows_dataset, ch_names, sfreq = load_preproc_mass(root=data_path / "MASS" / "4channels-eeg_eog_emg",
+data_path = "/storage/local/derivatives/MASS/4channels-eeg_eog_emg"
+windows_dataset, ch_names, sfreq = load_preproc_mass(root=data_path,
                                                      sfreq=None,
                                                      bids_root=None,
                                                      n_subj=None,
