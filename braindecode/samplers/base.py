@@ -65,11 +65,7 @@ class RecordingSampler(Sampler):
         # XXX docstring missing
         return self.rng.choice(self.n_recordings)
 
-    def sample_classe(self):
-        """Return a random recording index.
-        """
-        # XXX docstring missing
-        return self.rng.choice(self.n_classes)
+
 
     def sample_window(self, rec_ind=None):
         """Return a specific window.
@@ -87,9 +83,6 @@ class RecordingSampler(Sampler):
     def n_recordings(self):
         return self.info.shape[0]
 
-    @property
-    def n_classes(self):
-        return self.metadata['target'].unique()
 
 
 class SequenceSampler(RecordingSampler):
@@ -135,7 +128,7 @@ class SequenceSampler(RecordingSampler):
             yield tuple(range(start_ind, start_ind + self.n_windows))
 
 
-class USleepSampler(RecordingSampler):
+class BalancedSequenceSampler(RecordingSampler):
     """Sample sequences of consecutive windows.
 
     Parameters
@@ -167,6 +160,17 @@ class USleepSampler(RecordingSampler):
             ['index', 'subject']].agg(['unique'])
         self.info_class.columns = self.info.columns.get_level_values(0)
 
+    def n_classes(self, rec_ind):
+        """Return the number of classes for a specific recording
+        """
+        return len(self.info_class.loc[rec_ind])
+
+    def sample_class(self,rec_ind):
+        """Return a random class index.
+        """
+        # XXX docstring missing
+        return self.rng.choice(self.n_classes(rec_ind))
+
     def _compute_seq_start_ind(self, rec_ind=None, class_ind=None):
         """Randomly compute sequence start indice.
 
@@ -177,7 +181,7 @@ class USleepSampler(RecordingSampler):
         Returns
         -------
         start_ind : int
-            The indice of the first windows of possible sequences.
+            The index of the first window of a possible sequence.
 
         rec_ind : int
             The random recording choosen for the indice of the f.
@@ -188,22 +192,19 @@ class USleepSampler(RecordingSampler):
         if rec_ind is None:
             rec_ind = self.sample_recording()
         if class_ind is None:
-            class_ind = self.sample_classe()
+            class_ind = self.sample_class(rec_ind)
 
         rec_index = self.info.iloc[rec_ind]['index']
         len_rec_index = len(rec_index)
 
-        win_ind = self.rng.choice(self.info_class.iloc[rec_ind*5 + class_ind]['index'])
+        win_ind = self.rng.choice(self.info_class.loc[rec_ind].loc[class_ind]['index'])
         win_ind_in_rec = np.where(rec_index == win_ind)[0][0]
 
-        win_pos = self.rng.choice(
-                [i for i in range(self.n_windows)][
-                    np.max((self.n_windows - len_rec_index + win_ind_in_rec, 0)):np.min(
-                        (win_ind_in_rec+1, self.n_windows)
-                    )
-                ]
-            )
+        posmax = np.min((win_ind_in_rec+1, self.n_windows))  # position maximal in the sequence
+        posmin = np.max((self.n_windows - len_rec_index + win_ind_in_rec, 0))  # position maximal in the sequence
 
+        win_pos = self.rng.randint(posmin, posmax)
+            
         start_ind = win_ind - win_pos
         return start_ind, rec_ind, class_ind
 
@@ -214,3 +215,5 @@ class USleepSampler(RecordingSampler):
         for _ in range(self.seq_nbr):
             start_ind, _, _ = self._compute_seq_start_ind()
             yield tuple(range(start_ind, start_ind + self.n_windows))
+
+    
