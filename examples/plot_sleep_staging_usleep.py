@@ -55,7 +55,7 @@ References
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=None, recording_ids=[1], crop_wake_mins=30)
+    subject_ids=None, recording_ids=[2], crop_wake_mins=30)
 
 
 ######################################################################
