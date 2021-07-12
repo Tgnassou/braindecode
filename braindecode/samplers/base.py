@@ -82,7 +82,6 @@ class RecordingSampler(Sampler):
         return self.info.shape[0]
 
 
-
 class SequenceSampler(RecordingSampler):
     """Sample sequences of consecutive windows.
 
@@ -169,6 +168,14 @@ class BalancedSequenceSampler(RecordingSampler):
         # XXX docstring missing
         return self.rng.choice(self.n_classes(rec_ind))
 
+    def sample_subject(self):
+        """Return a random subject  .
+        """
+        # XXX docstring missing
+        subjects = np.unique(self.metadata.subject.to_list())
+
+        return self.rng.choice(subjects)
+
     def _compute_seq_start_ind(self, rec_ind=None, class_ind=None):
         """Randomly compute sequence start indice.
 
@@ -188,21 +195,21 @@ class BalancedSequenceSampler(RecordingSampler):
             The random class choosen.
         """
         if rec_ind is None:
-            rec_ind = self.sample_recording()
+            rec_ind = self.sample_subject()
         if class_ind is None:
             class_ind = self.sample_class(rec_ind)
 
-        rec_inds = self.info.iloc[rec_ind]['index']
+        rec_inds = self.info.loc[rec_ind]['index']
         len_rec_inds = len(rec_inds)
 
-        win_ind = self.rng.choice(self.info_class.loc[rec_ind].loc[class_ind]['index'])
+        win_ind = self.rng.choice(self.info_class.loc[rec_ind].iloc[class_ind]['index'])
         win_ind_in_rec = np.where(rec_inds == win_ind)[0][0]
 
         posmax = np.min((win_ind_in_rec+1, self.n_windows))  # position maximal in the sequence
         posmin = np.max((self.n_windows - len_rec_inds + win_ind_in_rec, 0))  # position minimal in the sequence
 
         win_pos = self.rng.randint(posmin, posmax)
-          
+
         start_ind = win_ind - win_pos
         return start_ind, rec_ind, class_ind
 
