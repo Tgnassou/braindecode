@@ -150,21 +150,23 @@ class USleep(nn.Module):
     def __init__(self,
                  in_chans=2,
                  sfreq=100,
-                 depth=10,
+                 depth=12,
+                 n_time_filters=5,
                  complexity_factor=2,
                  with_skip_connection=True,
                  n_classes=5,
                  input_size_s=30,
+                 time_conv_size=9,
                  apply_softmax=False
                  ):
         super().__init__()
 
         self.in_chans = in_chans
 
-        # Harcoded (otherwise dims can break)
-        time_conv_size = 9  # 0.09s at sfreq = 100 Hz
-        max_pool_size = 2   # 0.02s at sfreq = 100 Hz
-        n_time_filters = 5
+        max_pool_size = 2  # Hardcoded to avoid dimensional errors
+
+        if time_conv_size % 2 == 0:
+            raise ValueError('time_conv_size need to be odd')
 
         # Convert between units: seconds to time-points (at sfreq)
         input_size = np.ceil(input_size_s * sfreq).astype(int)
@@ -176,7 +178,7 @@ class USleep(nn.Module):
 
         channels = [in_chans] + channels  # len = depth + 2
         self.channels = channels
-
+        print(channels)
         # Instantiate encoder
         encoder = []
         for idx in range(depth):
@@ -187,6 +189,7 @@ class USleep(nn.Module):
                               downsample=max_pool_size)
             ]
         self.encoder = nn.Sequential(*encoder)
+        print(channels)
 
         # Instantiate bottom (channels increase, temporal dim stays the same)
         self.bottom = nn.Sequential(
@@ -197,6 +200,7 @@ class USleep(nn.Module):
                     nn.ELU(),
                     nn.BatchNorm1d(num_features=channels[idx + 2]),
                 )
+        print(channels)
 
         # Instantiate decoder
         decoder = []
@@ -210,6 +214,7 @@ class USleep(nn.Module):
                               with_skip_connection=with_skip_connection)
             ]
         self.decoder = nn.Sequential(*decoder)
+        print(channels)
 
         # The temporal dimension remains unchanged
         # (except through the AvgPooling which collapses it to 1)
@@ -242,6 +247,7 @@ class USleep(nn.Module):
             nn.Softmax(dim=1) if apply_softmax else nn.Identity(),
             # output is (B, n_classes, S)
         )
+        print(channels)
 
     def forward(self, x):
         """If input x has shape (B, S, C, T), return y_pred of shape (B, n_classes, S).
@@ -256,7 +262,6 @@ class USleep(nn.Module):
         residuals = []
         for down in self.encoder:
             x, res = down(x)
-            print(x.shape)
             residuals.append(res)
 
         # bottom
