@@ -55,7 +55,7 @@ References
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=None, recording_ids=[2], crop_wake_mins=30)
+    subject_ids=[i for i in range(5)], recording_ids=[2], crop_wake_mins=30)
 
 
 ######################################################################
@@ -71,6 +71,7 @@ from braindecode.preprocessing import preprocess, Preprocessor
 from sklearn.preprocessing import robust_scale
 
 preprocessors = [Preprocessor(robust_scale, channel_wise=True)]
+
 
 # Transform the data
 preprocess(dataset, preprocessors)
@@ -157,7 +158,7 @@ n_windows = 35  # Sequences of 3 consecutive windows; originally 35 in paper
 n_windows_stride = 35  # Non-overlapping sequences
 n_sequence = 1000
 
-train_sampler = BalancedSequenceSampler(train_set.get_metadata(), n_windows, n_sequence)
+train_sampler = SequenceSampler(train_set.get_metadata(), n_windows, n_windows_stride)
 valid_sampler = SequenceSampler(valid_set.get_metadata(), n_windows, n_windows_stride)
 
 # Print number of examples per class
@@ -173,7 +174,7 @@ print(len(valid_sampler))
 
 from sklearn.utils.class_weight import compute_class_weight
 
-y_train = [train_set[idx][1][1] for idx in train_sampler]
+y_train = [train_set[idx][1] for idx in range(len(train_set))]
 class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
 
 
@@ -203,7 +204,6 @@ in_chans, input_size_samples = train_set[0][0].shape
 model = USleep(
     in_chans=in_chans,
     sfreq=sfreq,
-    depth=12,
     with_skip_connection=True,
     n_classes=n_classes,
     input_size_s=input_size_samples / sfreq,
