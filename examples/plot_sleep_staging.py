@@ -50,7 +50,7 @@ from numbers import Integral
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=[0, 1], recording_ids=[2], crop_wake_mins=30)
+    subject_ids=[i for i in range(30)], recording_ids=[2], crop_wake_mins=30)
 
 
 ######################################################################
@@ -135,7 +135,7 @@ from braindecode.datasets import BaseConcatDataset
 random_state = 31
 subjects = np.unique(windows_dataset.description['subject'])
 subj_train, subj_valid = train_test_split(
-    subjects, test_size=0.5, random_state=random_state)
+    subjects, test_size=0.2, random_state=random_state)
 
 split_ids = {'train': subj_train, 'valid': subj_valid}
 splitted = dict()
@@ -292,7 +292,7 @@ from braindecode import EEGClassifier
 
 lr = 1e-3
 batch_size = 32
-n_epochs = 10
+n_epochs = 50
 
 train_bal_acc = EpochScoring(
     scoring='balanced_accuracy', on_train=True, name='train_bal_acc',
@@ -340,6 +340,7 @@ import pandas as pd
 df = pd.DataFrame(clf.history.to_list())
 df[['train_mis_clf', 'valid_mis_clf']] = 100 - df[
     ['train_bal_acc', 'valid_bal_acc']] * 100
+df.to_csv('csv/chambon_sampler.csv')
 
 # get percent of misclass for better visual comparison to loss
 plt.style.use('seaborn-talk')

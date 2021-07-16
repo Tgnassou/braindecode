@@ -55,7 +55,7 @@ References
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=[i for i in range(5)], recording_ids=[2], crop_wake_mins=30)
+    subject_ids=[i for i in range(30)], recording_ids=[2], crop_wake_mins=30)
 
 
 ######################################################################
@@ -155,11 +155,12 @@ valid_set = splitted['valid']
 from braindecode.samplers import SequenceSampler, BalancedSequenceSampler
 
 n_windows = 35  # Sequences of 3 consecutive windows; originally 35 in paper
-n_windows_stride = 35  # Non-overlapping sequences
-n_sequence = 1000
+n_windows_stride = 1 # Non-overlapping sequences
+n_sequence = 15000
 
 train_sampler = SequenceSampler(train_set.get_metadata(), n_windows, n_windows_stride)
-valid_sampler = SequenceSampler(valid_set.get_metadata(), n_windows, n_windows_stride)
+# train_sampler = BalancedSequenceSampler(train_set.get_metadata(), n_windows, n_sequence)
+valid_sampler = SequenceSampler(valid_set.get_metadata(), n_windows, 35)
 
 # Print number of examples per class
 print(len(train_sampler))
@@ -207,6 +208,7 @@ model = USleep(
     with_skip_connection=True,
     n_classes=n_classes,
     input_size_s=input_size_samples / sfreq,
+    apply_softmax=True
 )
 
 # Send model to GPU
@@ -237,7 +239,7 @@ from braindecode import EEGClassifier
 
 lr = 1e-3
 batch_size = 64
-n_epochs = 100  # this number is kept too small to reduce running time in the doc
+n_epochs = 50  # this number is kept too small to reduce running time in the doc
 
 from sklearn.metrics import balanced_accuracy_score
 
@@ -299,7 +301,7 @@ df = pd.DataFrame(clf.history.to_list())
 df[['train_mis_clf', 'valid_mis_clf']] = (
     100 - df[['train_bal_acc', 'valid_bal_acc']] * 100
 )
-
+df.to_csv('csv/usleep_sampler.csv')
 # get percent of misclass for better visual comparison to loss
 plt.style.use('seaborn-talk')
 fig, ax1 = plt.subplots(figsize=(8, 3))
