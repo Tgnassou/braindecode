@@ -46,7 +46,7 @@ class RecordingSampler(Sampler):
         self.rng = check_random_state(random_state)
 
     def _init_info(self):
-        keys = [k for k in ['subject', 'session', 'run']
+        keys = [k for k in ['subject', 'session', 'run', 'recording']
                 if k in self.metadata.columns]
         if not keys:
             raise ValueError(
@@ -147,7 +147,7 @@ class BalancedSequenceSampler(RecordingSampler):
         self.n_windows_stride = 1
         self.n_sequences = n_sequences
 
-        keys = [k for k in ['subject', 'session', 'run', 'target']
+        keys = [k for k in ['subject', 'session', 'run', 'recording', 'target']
                 if k in self.metadata.columns]
         if not keys:
             raise ValueError(
@@ -157,26 +157,31 @@ class BalancedSequenceSampler(RecordingSampler):
             ['index', 'subject']].agg(['unique'])
         self.info_class.columns = self.info.columns.get_level_values(0)
 
-    def n_classes(self, rec_ind):
+    def n_classes(self, subj_ind, sess_ind):
         """Return the number of classes for a specific recording
         """
-        return len(self.info_class.loc[rec_ind])
+        return len(self.info_class.loc[(subj_ind, sess_ind)])
 
-    def sample_class(self, rec_ind):
+    def sample_class(self, subj_ind, sess_ind):
         """Return a random class index.
         """
         # XXX docstring missing
-        return self.rng.choice(self.n_classes(rec_ind))
+        return self.rng.choice(self.n_classes(subj_ind, sess_ind))
 
     def sample_subject(self):
-        """Return a random subject  .
+        """Return a random subject.
         """
         # XXX docstring missing
         subjects = np.unique(self.metadata.subject.to_list())
 
         return self.rng.choice(subjects)
 
-    def _compute_seq_start_ind(self, rec_ind=None, class_ind=None):
+    def sample_session(self, subj_ind):
+        sess_inds = np.unique(self.info.loc[subj_ind].index)
+
+        return self.rng.choice(sess_inds)
+
+    def _compute_seq_start_ind(self, subj_ind=None, sess_ind=None, class_ind=None):
         """Randomly compute sequence start indice.
 
         Choose a window associated with a random recording
@@ -188,35 +193,45 @@ class BalancedSequenceSampler(RecordingSampler):
         start_ind : int
             The index of the first window of a possible sequence.
 
-        rec_ind : int
-            The random recording choosen for the indice of the f.
+        subj_ind : int
+            The random subject choosen.
+
+        subj_ind : int
+            The random session of the subject choosen.
 
         class_ind : int
-            The random class choosen.
+            The random class of the session choosen.
         """
-        if rec_ind is None:
-            rec_ind = self.sample_subject()
+        if subj_ind is None:
+            subj_ind = self.sample_subject()
+        if sess_ind is None:
+            sess_ind = self.sample_session(subj_ind)
         if class_ind is None:
-            class_ind = self.sample_class(rec_ind)
+            class_ind = self.sample_class(subj_ind, sess_ind)
 
-        rec_inds = self.info.loc[rec_ind]['index']
+        rec_inds = self.info.loc[(subj_ind, sess_ind)]['index']
         len_rec_inds = len(rec_inds)
 
-        win_ind = self.rng.choice(self.info_class.loc[rec_ind].iloc[class_ind]['index'])
+        win_ind = self.rng.choice(
+                    self.info_class.loc[(subj_ind, sess_ind)].iloc[class_ind]['index']
+                    )
         win_ind_in_rec = np.where(rec_inds == win_ind)[0][0]
 
-        posmax = np.min((win_ind_in_rec+1, self.n_windows))  # position maximal in the sequence
-        posmin = np.max((self.n_windows - len_rec_inds + win_ind_in_rec, 0))  # position minimal in the sequence
+        # position maximal in the sequence
+        posmax = np.min((win_ind_in_rec+1, self.n_windows))
+
+        # position minimal in the sequence
+        posmin = np.max((self.n_windows - len_rec_inds + win_ind_in_rec, 0))
 
         win_pos = self.rng.randint(posmin, posmax)
 
         start_ind = win_ind - win_pos
-        return start_ind, rec_ind, class_ind
+        return start_ind, subj_ind, sess_ind, class_ind
 
     def __len__(self):
         return self.n_sequences
 
     def __iter__(self):
         for _ in range(self.n_sequences):
-            start_ind, _, _ = self._compute_seq_start_ind()
+            start_ind, _, _, _ = self._compute_seq_start_ind()
             yield tuple(range(start_ind, start_ind + self.n_windows))

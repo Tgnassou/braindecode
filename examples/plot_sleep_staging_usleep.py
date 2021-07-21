@@ -55,7 +55,7 @@ References
 from braindecode.datasets.sleep_physionet import SleepPhysionet
 
 dataset = SleepPhysionet(
-    subject_ids=[i for i in range(30)], recording_ids=[2], crop_wake_mins=30)
+    subject_ids=[i for i in range(5)], recording_ids=[1, 2], crop_wake_mins=30)
 
 
 ######################################################################
@@ -156,10 +156,10 @@ from braindecode.samplers import SequenceSampler, BalancedSequenceSampler
 
 n_windows = 35  # Sequences of 3 consecutive windows; originally 35 in paper
 n_windows_stride = 1 # Non-overlapping sequences
-n_sequence = 15000
+n_sequence = 5000
 
-train_sampler = SequenceSampler(train_set.get_metadata(), n_windows, n_windows_stride)
-# train_sampler = BalancedSequenceSampler(train_set.get_metadata(), n_windows, n_sequence)
+# train_sampler = SequenceSampler(train_set.get_metadata(), n_windows, n_windows_stride)
+train_sampler = BalancedSequenceSampler(train_set.get_metadata(), n_windows, n_sequence)
 valid_sampler = SequenceSampler(valid_set.get_metadata(), n_windows, 35)
 
 # Print number of examples per class
